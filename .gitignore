@@ -1,3 +1,9 @@
+# Environment variables
+.env
+.env copy
+.env.local
+.env.*.local
+
 # Python
 __pycache__/
 *.py[cod]
@@ -8,13 +14,20 @@ __pycache__/
 venv/
 ENV/
 env/
-.env
-.env.*
+*.egg-info/
+dist/
+build/
 
-# GoLogin/Playwright
-profiles/
+# GoLogin cache
 .profiles.json
+
+# Browser profiles
+profiles/
+
+# Logs
 *.log
+init*.log
+session*.log
 
 # IDE
 .vscode/
@@ -27,7 +40,7 @@ profiles/
 .DS_Store
 Thumbs.db
 
-# Project specific
-storage/
-session*.log
-init*.log
+# Temporary files
+*.tmp
+*.bak
+*.backup

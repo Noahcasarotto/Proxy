@@ -140,8 +140,34 @@ async def cli(mode: str):
                 user_dir.mkdir(parents=True, exist_ok=True)
                 ctx = await pw.chromium.launch_persistent_context(
                     user_data_dir=str(user_dir),
+                    channel="chrome",
                     headless=False,
                     proxy={"server": proxy_server, "username": usr, "password": pwd},
+                    ignore_default_args=["--enable-automation"],
+                    args=[
+                        "--disable-blink-features=AutomationControlled",
+                        "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+                        "--webrtc-stun-probe-timeout=2000",
+                        "--no-default-browser-check",
+                        "--no-first-run",
+                        f"--lang={acc.get('locale','en-US')}",
+                    ],
+                    locale=acc.get("locale", "en-US"),
+                    timezone_id=acc.get("timezone", "UTC"),
+                    geolocation={
+                        "latitude": acc["geo"]["lat"],
+                        "longitude": acc["geo"]["lon"],
+                    },
+                    permissions=["geolocation"],
+                )
+                # Inject small stealth script to mask webdriver and related properties
+                await ctx.add_init_script(
+                    """
+                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });
+                    Object.defineProperty(navigator, 'platform',  { get: () => 'Win32' });
+                    try { window.chrome = window.chrome || { runtime: {} }; } catch(e) {}
+                    """
                 )
                 page = await ctx.new_page()
                 await page.goto("https://ip.oxylabs.io/location")

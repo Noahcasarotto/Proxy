@@ -21,12 +21,13 @@ from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 from tenacity import retry, wait_fixed, stop_after_attempt
 
-from gologin import GoLogin
+from proxy_manager.api.gologin import GoLogin
 
 load_dotenv()
 
-ROOT = pathlib.Path(__file__).resolve().parent
-CACHE_FILE = ROOT / ".profiles.json"
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+CACHE_FILE = PROJECT_ROOT / ".profiles.json"
+CONFIG_DIR = PROJECT_ROOT / "proxy_manager" / "config"
 
 # ------------------------------------------------------------
 # Helpers
@@ -65,7 +66,7 @@ async def open_window(playwright, ws_url: str, acc_id: str):
     print(f"[{acc_id}] Window ready ➜ create / login account, then press ENTER in terminal…")
     input()
 
-    storage_dir = ROOT / "profiles"
+    storage_dir = PROJECT_ROOT / "profiles"
     storage_dir.mkdir(exist_ok=True)
     out_file = storage_dir / f"{acc_id}_storage.json"
     await context.storage_state(path=str(out_file))
@@ -76,7 +77,8 @@ async def open_window(playwright, ws_url: str, acc_id: str):
 
 async def cli(mode: str):
     # read accounts config
-    cfg = yaml.safe_load((ROOT / "accounts.yaml").read_text())
+    cfg_path = CONFIG_DIR / "accounts.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text())
     accounts = cfg["accounts"]
 
     # GoLogin client
@@ -134,7 +136,7 @@ async def cli(mode: str):
                     print(f"{acc_id}: missing proxy creds; skip", file=sys.stderr)
                     continue
                 proxy_server = f"http://isp.oxylabs.io:{acc['proxy_port']}"
-                user_dir = ROOT / "profiles" / acc_id
+                user_dir = PROJECT_ROOT / "profiles" / acc_id
                 user_dir.mkdir(parents=True, exist_ok=True)
                 ctx = await pw.chromium.launch_persistent_context(
                     user_data_dir=str(user_dir),
@@ -153,7 +155,12 @@ async def cli(mode: str):
         sys.exit(1)
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["init", "start", "local"], required=True)
+    args = parser.parse_args()
+    asyncio.run(cli(args.mode))
+
+
 if __name__ == "__main__":
-    a = argparse.ArgumentParser()
-    a.add_argument("--mode", required=True, choices=["init", "start", "local"])
-    asyncio.run(cli(a.parse_args().mode))
+    main()

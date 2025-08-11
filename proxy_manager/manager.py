@@ -143,7 +143,8 @@ async def cli(mode: str):
                     channel="chrome",
                     headless=False,
                     proxy={"server": proxy_server, "username": usr, "password": pwd},
-                    ignore_default_args=["--enable-automation"],
+                    # Remove automation flag AND allow Chrome Web Store installs
+                    ignore_default_args=["--enable-automation", "--disable-extensions"],
                     args=[
                         "--disable-blink-features=AutomationControlled",
                         "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
@@ -173,6 +174,25 @@ async def cli(mode: str):
                 await page.goto("https://ip.oxylabs.io/location")
                 print(f"[{acc_id}] Local window opened. Complete actions then press ENTER here…")
                 input()
+                # If there is a CRX extension in project root, auto-load it
+                ext_crx = PROJECT_ROOT / "HeyReach.crx"
+                if ext_crx.exists():
+                    await ctx.close()
+                    load_args = [
+                        f"--disable-extensions-except={ext_crx}",
+                        f"--load-extension={ext_crx}",
+                    ]
+                    ctx = await pw.chromium.launch_persistent_context(
+                        user_data_dir=str(user_dir),
+                        headless=False,
+                        channel="chrome",
+                        proxy={"server": proxy_server, "username": usr, "password": pwd},
+                        ignore_default_args=["--enable-automation", "--disable-extensions"],
+                        args=load_args + [
+                            "--no-sandbox",
+                        ],
+                    )
+                    page = await ctx.new_page()
                 await ctx.close()
         print("Local sessions finished.")
 

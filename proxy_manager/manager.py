@@ -75,11 +75,17 @@ async def open_window(playwright, ws_url: str, acc_id: str):
     await browser.close()
 
 
-async def cli(mode: str):
+async def cli(mode: str, *, only_ids: set[str] | None = None):
     # read accounts config
     cfg_path = CONFIG_DIR / "accounts.yaml"
     cfg = yaml.safe_load(cfg_path.read_text())
-    accounts = cfg["accounts"]
+    accounts: list[dict] = cfg["accounts"]
+
+    if only_ids:
+        accounts = [acc for acc in accounts if acc["id"] in only_ids]
+        if not accounts:
+            print(f"No accounts match --only {', '.join(only_ids)}", file=sys.stderr)
+            return
 
     # GoLogin client
     gl = GoLogin()
@@ -203,9 +209,15 @@ async def cli(mode: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["init", "start", "local"], required=True)
+    parser.add_argument("--mode", choices=["init", "start", "local"], required=True,
+                        help="What action to run: init (create GoLogin profiles), start (cloud profiles via GoLogin), local (open local persistent windows).")
+    parser.add_argument("--only", nargs="*", default=[],
+                        help="Optional list of account IDs (e.g. li-it-001) to process. If omitted, all accounts are processed in config order.")
+
     args = parser.parse_args()
-    asyncio.run(cli(args.mode))
+
+    # Pass filter list down
+    asyncio.run(cli(args.mode, only_ids=set(args.only)))
 
 
 if __name__ == "__main__":

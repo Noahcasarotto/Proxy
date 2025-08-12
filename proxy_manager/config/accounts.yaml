@@ -5,6 +5,15 @@ accounts:
     oxy_user_env: OXY_USER_LI001 # env var names that hold creds
     oxy_pass_env: OXY_PASS_LI001
     region: us                   # two-letter country for GoLogin
-    timezone: America/Los_Angeles
+    timezone: America/New_York
     locale: en-US
-    geo: { lat: 34.0522, lon: -118.2437 }
+    geo: { lat: 40.7128, lon: -74.0060 }
+
+  - id: li-it-001
+    proxy_port: 8009
+    oxy_user_env: OXY_USER_LI001
+    oxy_pass_env: OXY_PASS_LI001
+    region: it
+    timezone: Europe/Rome
+    locale: it-IT
+    geo: { lat: 41.9028, lon: 12.4964 }

@@ -1,5 +1,6 @@
 accounts:
   - id: li-us-001                # slug used everywhere
+    name: "Maria Morello"        # human tag
     email: "<FILL_AFTER_SIGNUP>" # will set after creating LinkedIn account
     proxy_port: 8001             # static IP at isp.oxylabs.io:8001 (45.196.56.16)
     oxy_user_env: OXY_USER_LI001 # env var names that hold creds
@@ -10,6 +11,7 @@ accounts:
     geo: { lat: 40.7128, lon: -74.0060 }
 
   - id: li-it-001
+    name: "Alessio Mauri"
     proxy_port: 8009
     oxy_user_env: OXY_USER_LI001
     oxy_pass_env: OXY_PASS_LI001

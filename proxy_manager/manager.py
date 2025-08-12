@@ -136,6 +136,7 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
         async with async_playwright() as pw:
             for acc in accounts:
                 acc_id = acc["id"]
+                acc_tag = tag(acc)
                 usr = os.getenv(acc["oxy_user_env"])
                 pwd = os.getenv(acc["oxy_pass_env"])
                 if not usr or not pwd:
@@ -178,7 +179,7 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
                 )
                 page = await ctx.new_page()
                 await page.goto("https://ip.oxylabs.io/location")
-                print(f"[{acc_id}] Local window opened. Complete actions then press ENTER here…")
+                print(f"[{acc_tag}] Local window opened. Complete actions then press ENTER here…")
                 input()
                 # If there is a CRX extension in project root, auto-load it
                 ext_crx = PROJECT_ROOT / "HeyReach.crx"

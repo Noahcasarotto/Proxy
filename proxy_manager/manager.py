@@ -136,7 +136,7 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
         async with async_playwright() as pw:
             for acc in accounts:
                 acc_id = acc["id"]
-                acc_tag = tag(acc)
+                acc_tag = acc.get("name", acc_id)
                 usr = os.getenv(acc["oxy_user_env"])
                 pwd = os.getenv(acc["oxy_pass_env"])
                 if not usr or not pwd:

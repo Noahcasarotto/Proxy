@@ -19,3 +19,13 @@ accounts:
     timezone: Europe/Rome
     locale: it-IT
     geo: { lat: 41.9028, lon: 12.4964 }
+
+  - id: li-us-002
+    name: "Shelly Kane"
+    proxy_port: 8002
+    oxy_user_env: OXY_USER_LI001
+    oxy_pass_env: OXY_PASS_LI001
+    region: us
+    timezone: America/New_York
+    locale: en-US
+    geo: { lat: 34.0522, lon: -118.2437 }

@@ -13,6 +13,7 @@ accounts:
 
   - id: li-it-001
     name: "Alessio Mauri"
+    status: burned               # mark IP/account as no longer usable
     proxy_port: 8009
     oxy_user_env: OXY_USER_LI001
     oxy_pass_env: OXY_PASS_LI001
@@ -31,3 +32,47 @@ accounts:
     timezone: America/New_York
     locale: en-US
     geo: { lat: 34.0522, lon: -118.2437 }
+
+  - id: li-se-001
+    name: "Abdulrasheed Tijani"
+    proxy_port: 8010
+    oxy_user_env: OXY_USER_LI001
+    oxy_pass_env: OXY_PASS_LI001
+    region: se
+    timezone: Europe/Stockholm
+    locale: sv-SE
+    geo: { lat: 59.3293, lon: 18.0686 }
+    metadata:
+      email: "salimrwrfy34@hotmail.com"
+      password1: "Farhan@200#L"
+      password2: "Sajid@123"
+      linkedin_url: "http://linkedin.com/in/abdulrasheed-tijani-0b0b00ba"
+      connections: "100+"
+      tag_country: "Norway"
+
+  - id: li-pl-001
+    name: "Jakub Nowak"
+    proxy_port: 8007
+    oxy_user_env: OXY_USER_LI001
+    oxy_pass_env: OXY_PASS_LI001
+    region: pl
+    timezone: Europe/Warsaw
+    locale: pl-PL
+    geo: { lat: 52.2297, lon: 21.0122 }
+
+  - id: li-us-003
+    name: "Anton Vorobev"
+    proxy_port: 8003
+    oxy_user_env: OXY_USER_LI001
+    oxy_pass_env: OXY_PASS_LI001
+    region: us
+    timezone: America/New_York
+    locale: en-US
+    geo: { lat: 40.7128, lon: -74.0060 }
+    metadata:
+      email: "mhgcccshfvbj@hotmail.com"
+      password1: "Farhan@200#L"
+      password2: "Sajid@123"
+      linkedin_url: "http://linkedin.com/in/anton-vorobev-125407118"
+      connections: "100+"
+      tag_city: "New York"

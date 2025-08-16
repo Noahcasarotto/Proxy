@@ -1,0 +1,75 @@
+profiles:
+  - id: li-us-001
+    mode: cloud              # managed by GoLogin cloud
+    proxy_env: OXY_LI_PORT8001  # export ISP proxy URL in .env, e.g. http://user:pass@isp.oxylabs.io:8001
+    region:
+      locale: en-US
+      timezone: America/New_York
+      geo: { lat: 40.7128, lon: -74.0060, city: "New York" }
+    fingerprint:
+      os: win
+      user_agent: null        # keep GoLogin default
+      resolution: "1920x1080"
+    status: burned
+
+  - id: li-it-001
+    mode: cloud
+    proxy_env: OXY_LI_PORT8009
+    region:
+      locale: it-IT
+      timezone: Europe/Rome
+      geo: { lat: 41.9028, lon: 12.4964, city: "Rome" }
+    fingerprint:
+      os: win
+      user_agent: null
+      resolution: "1920x1080"
+    status: burned
+
+  - id: li-us-002
+    mode: cloud
+    proxy_env: OXY_LI_PORT8002
+    region:
+      locale: en-US
+      timezone: America/Los_Angeles
+      geo: { lat: 34.0522, lon: -118.2437, city: "Los Angeles" }
+    fingerprint:
+      os: win
+      user_agent: null
+      resolution: "1920x1080"
+    status: burned
+
+  - id: li-se-001
+    mode: cloud
+    proxy_env: OXY_LI_PORT8010
+    region:
+      locale: sv-SE
+      timezone: Europe/Stockholm
+      geo: { lat: 59.3293, lon: 18.0686, city: "Stockholm" }
+    fingerprint:
+      os: win
+      user_agent: null
+      resolution: "1920x1080"
+
+  - id: li-pl-001
+    mode: cloud
+    proxy_env: OXY_LI_PORT8007
+    region:
+      locale: pl-PL
+      timezone: Europe/Warsaw
+      geo: { lat: 52.2297, lon: 21.0122, city: "Warsaw" }
+    fingerprint:
+      os: win
+      user_agent: null
+      resolution: "1920x1080"
+
+  - id: li-us-003
+    mode: cloud
+    proxy_env: OXY_LI_PORT8003
+    region:
+      locale: en-US
+      timezone: America/New_York
+      geo: { lat: 40.7128, lon: -74.0060, city: "New York" }
+    fingerprint:
+      os: win
+      user_agent: null
+      resolution: "1920x1080"

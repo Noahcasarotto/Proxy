@@ -14,6 +14,7 @@ import json
 import os
 import pathlib
 import sys
+import urllib.parse
 from typing import Any, Dict
 
 import yaml
@@ -28,6 +29,10 @@ load_dotenv()
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 CACHE_FILE = PROJECT_ROOT / ".profiles.json"
 CONFIG_DIR = PROJECT_ROOT / "proxy_manager" / "config"
+# New unified profiles schema path
+CFG_PROFILES = CONFIG_DIR / "profiles.yaml"
+# Legacy accounts file path (kept for backward compatibility)
+CFG_ACCOUNTS = CONFIG_DIR / "accounts.yaml"
 
 # ------------------------------------------------------------
 # Helpers
@@ -76,10 +81,34 @@ async def open_window(playwright, ws_url: str, acc_id: str):
 
 
 async def cli(mode: str, *, only_ids: set[str] | None = None):
-    # read accounts config
-    cfg_path = CONFIG_DIR / "accounts.yaml"
-    cfg = yaml.safe_load(cfg_path.read_text())
-    accounts: list[dict] = cfg["accounts"]
+    # --------------------------------------------------------
+    # Load configuration – prefer new profiles.yaml schema but
+    # fall back to legacy accounts.yaml for backward compat.
+    # --------------------------------------------------------
+
+    if CFG_PROFILES.exists():
+        cfg = yaml.safe_load(CFG_PROFILES.read_text())
+        raw_profiles: list[dict] = cfg.get("profiles", [])
+
+        # Normalize into the legacy "account" dict shape the rest of
+        # this script expects so downstream code remains unchanged.
+        accounts: list[dict] = []
+        for p in raw_profiles:
+            region = p.get("region", {})
+            geo = region.get("geo", {})
+            accounts.append({
+                "id": p["id"],
+                "name": p.get("name", p["id"]),
+                # proxy_env replaces separate user/pass/port fields
+                "proxy_env": p["proxy_env"],
+                "locale": region.get("locale"),
+                "timezone": region.get("timezone"),
+                "geo": {"lat": geo.get("lat"), "lon": geo.get("lon")},
+                "status": p.get("status", ""),
+            })
+    else:
+        cfg = yaml.safe_load(CFG_ACCOUNTS.read_text())
+        accounts = cfg["accounts"]
 
     if only_ids:
         accounts = [acc for acc in accounts if acc["id"] in only_ids]
@@ -89,6 +118,23 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
 
     # GoLogin client
     gl = GoLogin()
+
+    # --------------------------------------------------------
+    # Helper: derive proxy server + credentials regardless of
+    # legacy or new account schema.
+    # --------------------------------------------------------
+
+    def proxy_creds(acc: dict[str, Any]):
+        """Return (server_host:port str, username, password) for account."""
+        if "proxy_env" in acc:
+            proxy_url = os.environ.get(acc["proxy_env"], "")
+            url = urllib.parse.urlparse(proxy_url)
+            return f"{url.hostname}:{url.port}", url.username or "", url.password or ""
+        # legacy
+        usr = os.environ[acc["oxy_user_env"]]
+        pwd = os.environ[acc["oxy_pass_env"]]
+        server = f"isp.oxylabs.io:{acc['proxy_port']}"
+        return server, usr, pwd
 
     cache = load_cache()
 
@@ -100,9 +146,7 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
                 print(f"{acc_id}: already exists (profile id={cache[acc_id]})")
                 continue
 
-            usr = os.environ[acc["oxy_user_env"]]
-            pwd = os.environ[acc["oxy_pass_env"]]
-            proxy_server = f"isp.oxylabs.io:{acc['proxy_port']}"
+            proxy_server, usr, pwd = proxy_creds(acc)
 
             profile_id = gl.create_profile(
                 name=acc_id,
@@ -137,12 +181,11 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
             for acc in accounts:
                 acc_id = acc["id"]
                 acc_tag = acc.get("name", acc_id)
-                usr = os.getenv(acc["oxy_user_env"])
-                pwd = os.getenv(acc["oxy_pass_env"])
-                if not usr or not pwd:
+                proxy_server, usr, pwd = proxy_creds(acc)
+                if not usr or not pwd or not proxy_server:
                     print(f"{acc_id}: missing proxy creds; skip", file=sys.stderr)
                     continue
-                proxy_server = f"http://isp.oxylabs.io:{acc['proxy_port']}"
+                proxy_server = f"http://{proxy_server}"
                 user_dir = PROJECT_ROOT / "profiles" / acc_id
                 user_dir.mkdir(parents=True, exist_ok=True)
                 ctx = await pw.chromium.launch_persistent_context(
@@ -150,14 +193,14 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
                     channel="chrome",
                     headless=False,
                     proxy={"server": proxy_server, "username": usr, "password": pwd},
-                    # Remove automation flag AND allow Chrome Web Store installs
-                    ignore_default_args=["--enable-automation", "--disable-extensions"],
+                    # Allow Chrome Web Store installs; no automation flags
+                    ignore_default_args=["--disable-extensions"],
                     args=[
-                        "--disable-blink-features=AutomationControlled",
-                        "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
-                        "--webrtc-stun-probe-timeout=2000",
                         "--no-default-browser-check",
                         "--no-first-run",
+                        "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+                        "--webrtc-stun-probe-timeout=2000",
+                        "--window-size=1920,1080",
                         f"--lang={acc.get('locale','en-US')}",
                     ],
                     locale=acc.get("locale", "en-US"),
@@ -168,15 +211,7 @@ async def cli(mode: str, *, only_ids: set[str] | None = None):
                     },
                     permissions=["geolocation"],
                 )
-                # Inject small stealth script to mask webdriver and related properties
-                await ctx.add_init_script(
-                    """
-                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });
-                    Object.defineProperty(navigator, 'platform',  { get: () => 'Win32' });
-                    try { window.chrome = window.chrome || { runtime: {} }; } catch(e) {}
-                    """
-                )
+                # No stealth script injection – let Chrome report real properties
                 page = await ctx.new_page()
                 await page.goto("https://ip.oxylabs.io/location")
                 print(f"[{acc_tag}] Local window opened. Complete actions then press ENTER here…")
